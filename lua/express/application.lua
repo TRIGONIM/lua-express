@@ -289,10 +289,11 @@ function APP_MT:listen(port, host, sslparams)
 		req.method  = req:method() -- GET/POST etc
 		req.headers = req:headers() -- #todo в node они lower-case, тут не проверял. И в express вроде не используется, так что мб надо удалить
 		-- res.headers = res._headers -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L103
+		req.query   = req.querystring
 
 		res:statusCode(200)
 		-- res.headers = {}
-		res:addHeader("Content-Type", "text/html")
+		-- res:addHeader("Content-Type", "text/html")
 
 		self:handle(req, res)
 	end, sslparams))
