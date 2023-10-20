@@ -1,6 +1,4 @@
-local json_encode = require("gmod.util").TableToJSON
-
-
+local json_encode = require("cjson").encode
 
 local RES_MT = {}
 RES_MT.__index = RES_MT
