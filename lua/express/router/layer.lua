@@ -1,12 +1,6 @@
 local pathRegexp = require("express.utils").pathRegexp
 local dprint     = require("express.utils").debugPrint
-
-local function string_URLDecode(str)
-	if str == "" then return str end
-	return str:gsub("%%(%x%x)", function(hex)
-		return string.char(tonumber(hex, 16))
-	end)
-end
+local urldecode  = require("express.utils").urldecode
 
 -- Представляет собой слой маршрутизации
 -- Слои создаются в:
@@ -80,7 +74,7 @@ function LAYER_MT:match(path)
 		end
 
 		if self.regexp.fast_star then -- *
-			self.params = {[0] = string_URLDecode(path)}
+			self.params = {[0] = urldecode(path)}
 			self.path = path
 			return true
 		end
@@ -107,7 +101,7 @@ function LAYER_MT:match(path)
 	for i, key in ipairs(self.keys) do
 		-- Насчет i + 1:
 		-- Если в роуте есть :param (#self.keys > 0), то match[1] будет весь путь, а match[2+] – группы (сами параметры)
-		params[key] = string_URLDecode( match[i + 1] ) -- %d0%b1%d0%bb%d0%b0%d0%b1%d0%bb%d0%b0%d0%b1%d0%bb%d0%b0 > блаблабла
+		params[key] = urldecode( match[i + 1] ) -- %d0%b1%d0%bb%d0%b0%d0%b1%d0%bb%d0%b0%d0%b1%d0%bb%d0%b0 > блаблабла
 	end
 
 	return true

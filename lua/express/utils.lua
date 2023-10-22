@@ -1,5 +1,3 @@
-local utils = {}
-
 local pattern_escape_replacements = {
 	["("] = "%(",
 	[")"] = "%)",
@@ -79,8 +77,18 @@ local function debugPrint(...)
 	print("[express]", ...)
 end
 
-utils.pathRegexp  = pathRegexp
-utils.getPathname = getPathname
-utils.debugPrint  = debugPrint
+local function string_URLDecode(str)
+	if str == "" then return str end
+	str = str:gsub('+', ' ')
+	return str:gsub("%%(%x%x)", function(hex)
+		return string.char(tonumber(hex, 16))
+	end)
+end
 
-return utils
+-- require("express.utils").urldecode
+return {
+	pathRegexp  = pathRegexp,
+	getPathname = getPathname,
+	debugPrint  = debugPrint,
+	urldecode   = string_URLDecode,
+}
