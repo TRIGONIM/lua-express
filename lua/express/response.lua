@@ -40,12 +40,13 @@ function RES_MT:send(body)
 	local ty = type(chunk)
 	if ty == "string" then
 		if not self:get("Content-Type") then
-			self:set("Content-Type", "text/html")
+			self:set("Content-Type", "text/html; charset=utf-8")
 		end
 	elseif ty == "table" then
 		return self:json(chunk)
 	end
 
+	-- etag можно позаимствовать тут: https://github.com/creationix/weblit/blob/master/libs/weblit-etag-cache.lua
 	local etagFn = app:get("etag fn") -- #todo пока что функция не реализована и etag никогда не делается, хотя код ниже подготовлен
 	local generateETag = self:get("ETag") and type(etagFn) == "function"
 
@@ -120,7 +121,24 @@ function RES_MT:type(typ)
 end
 -- function RES_MT:format(obj) end
 -- function RES_MT:attachment(filename) end
--- function RES_MT:append(header, value) end
+
+-- Append additional header `field` with value `val`.
+-- Example:
+--    res:append('Link', ['<http://localhost/>', '<http://localhost:3000/>'])
+--    res:append('Set-Cookie', 'foo=bar; Path=/; HttpOnly')
+--    res:append('Warning', '199 Miscellaneous warning')
+function RES_MT:append(header, values)
+	values = type(values) == "table" and values or {values}
+
+    local prev = self:get(header)
+    local val  = table.concat(values, ", ")
+
+    if prev then
+        val = prev .. ", " .. val
+    end
+
+    return self:set(header, val)
+end
 
 
 -- set headers https://expressjs.com/en/5x/api.html#res.set
@@ -139,8 +157,31 @@ function RES_MT:get(field)
 	return self._headers[field]
 end
 
--- function RES_MT:clearCookie(name, options) end
--- function RES_MT:cookie(name, value, options) end -- 🔥 #todo довольно важная функция
+function RES_MT:clearCookie(name, options)
+	local opts = options or {}
+	opts.expires = "Thu, 01 Jan 1970 00:00:00 GMT"
+	opts.path = "/"
+	return self:cookie(name, "", opts)
+end
+
+function RES_MT:cookie(name, value, options)
+	local opts = options or {}
+	if opts.maxAge then
+		opts.Expires = os.date("!%a, %d %b %Y %H:%M:%S GMT", os.time() + opts.maxAge)
+		opts["Max-Age"] = opts.maxAge
+		opts.maxAge = nil
+	end
+
+	if not opts.path then
+		opts.path = "/"
+	end
+
+	local cookie = name .. "=" .. value
+	for k, v in pairs(opts) do
+		cookie = cookie .. "; " .. k .. "=" .. v
+	end
+	return self:append("Set-Cookie", cookie)
+end
 
 -- Set the location header to `url`.
 -- The given `url` can also be "back", which redirects to the _Referrer_ or _Referer_ headers or "/".

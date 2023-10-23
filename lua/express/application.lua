@@ -293,12 +293,16 @@ function APP_MT:listen(port, host, sslparams)
 
 		res:statusCode(200)
 		-- res.headers = {}
-		-- res:addHeader("Content-Type", "text/html")
+		-- res:addHeader("Content-Type", "text/html; charset=utf-8")
 
 		self:handle(req, res)
 	end, sslparams))
 
 	io.stderr:write("express.lua is up on " .. (sslparams and "https" or "http") .. "://" .. server_ip .. ":" .. server_port .. "/\n")
+
+	if not copas.running then
+		copas.loop()
+	end
 
 	return server_sock, nil
 end
