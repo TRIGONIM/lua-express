@@ -31,11 +31,11 @@ function RES_MT:send(body)
 
 	local app = self.app
 
-	-- if tonumber(chunk) then
-	-- 	if not self:get("Content-Type") then
-	-- 		self:set("Content-Type", "text/plain")
-	-- 	end
-	-- end
+	if tonumber(chunk) then
+		if not self:get("Content-Type") then
+			self:set("Content-Type", "text/plain; charset=utf-8")
+		end
+	end
 
 	local ty = type(chunk)
 	if ty == "string" then
@@ -92,7 +92,7 @@ function RES_MT:json(obj)
 	local json = json_encode(obj) -- #todo что будет, если в obj будет функция? Ошибка, как обработать?
 
 	if not self:get("Content-Type") then
-		self:set("Content-Type", "application/json")
+		self:set("Content-Type", "application/json; charset=utf-8")
 	end
 
 	return self:send(json)
