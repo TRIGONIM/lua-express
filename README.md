@@ -5,7 +5,7 @@ A minimalistic web framework for Lua. Almost a full copy of express.js
 
 ## dev:
 
-#todo fill it with checked and correct data
+#todo fill it with checked and correct data.
 
 ```bash
 git clone this rep
