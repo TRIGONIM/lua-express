@@ -28,5 +28,5 @@ jobs:
           context: .
           push: true
           tags: |
-            defaced/lua-express:latest
-            defaced/lua-express:${{ github.ref }}
+            ${{ secrets.DOCKER_USERNAME }}/lua-express:latest
+            ${{ secrets.DOCKER_USERNAME }}/lua-express:${{ github.ref_name }}
