@@ -28,7 +28,7 @@ function APP_MT:defaultConfiguration()
 
 	self:enable("x-powered-by")
 
-	dprint("booting in " .. env .. " mode")
+	dprint("booting in %s mode", env)
 
 	self.mountpath = "/" -- pegasus:new{location = "/"}
 
@@ -91,7 +91,7 @@ function APP_MT:handle(req, res, callback)
 
 	local done = callback or finalhandler(req, res, {
 		onerror = function(err) -- './pega/application.lua:81: attempt to index field 'pegasus_res' (a nil value)'
-			dprint("express ошибка:", err)
+			dprint("finalhandler error: %s", err)
 		end
 	})
 
@@ -133,7 +133,7 @@ function APP_MT:use(path, ...)
 		-- app:use( express() )
 		if type(fn) == "table" and fn.handle and fn.set then -- #todo что за .set ? Его в роутере нет и вообще в express не нахожу
 			local app = fn
-			dprint("APP_MT:use app under " .. path)
+			dprint(":use app under %s", path)
 			app.mountpath = path
 			app.parent = self
 
@@ -170,7 +170,7 @@ function APP_MT:param(name, fn)
 end
 
 function APP_MT:set(setting, value)
-	dprint("set " .. tostring(setting) .. " to " .. tostring(value))
+	dprint("set '%s' to %s", setting, value)
 	self.settings[setting] = value
 	return self
 end

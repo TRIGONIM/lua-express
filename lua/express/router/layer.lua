@@ -16,8 +16,7 @@ local LAYER_MT = setmetatable({}, {
 		local inf = debug.getinfo(fn, "S")
 		local infstr = inf.short_src .. ":" .. inf.linedefined
 
-		dprint("LAYER_MT new: " .. path, "pattern: " .. pattern, "strict, end: ", opts.strict or "no", opts["end"] or "no")
-		-- dprint("LAYER_MT new " .. path .. ". Inf: " .. infstr .. ". Patt: " .. pattern)
+		dprint("new %s (pattern: %s, strict: %s, end: %s)", path, pattern, opts.strict or "no", opts["end"] or "no")
 
 		return setmetatable({
 			handle = fn,
@@ -94,7 +93,7 @@ function LAYER_MT:match(path)
 
 	self.params = {}
 	self.path = match[1] -- вернет /birds для /birds/about, если роут /birds (regexp.pattern == "^/birds")
-	dprint("В layer:match('" .. path .. "') self.path = '" .. self.path .. "'") -- /birds/about > /birds
+	dprint("In layer:match('%s') self.path = '%s'", path, self.path) -- /birds/about > /birds
 
 	local params = self.params
 

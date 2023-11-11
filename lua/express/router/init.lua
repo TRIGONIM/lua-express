@@ -95,7 +95,7 @@ end
 -- end
 
 function ROUTER_MT:handle(req, res, out)
-	dprint("dispatching " .. req.method .. " " .. req.url) -- GET /about (для /birds/about из примера https://expressjs.com/ru/guide/routing.html)
+	dprint("dispatching %s %s", req.method, req.url) -- GET /about (для /birds/about из примера https://expressjs.com/ru/guide/routing.html)
 
 	local idx = 1
 	local protohost = getProtohost(req.url) or ""
@@ -252,7 +252,7 @@ function ROUTER_MT:handle(req, res, out)
 
 			-- Setup base URL (no trailing slash)
 			req.baseUrl = parentUrl .. (removed:sub(-1) == "/" and removed:sub(1, -2) or removed) -- /birds (removed == /birds)
-			dprint("Что тут baseUrl? ", req.baseUrl)
+			-- dprint("Что тут baseUrl? %s", req.baseUrl)
 		end
 
 		-- dprint("layer.name: " .. layer.name .. ", layerPath: " .. layerPath .. ", originalUrl: " .. req.originalUrl)
@@ -368,7 +368,7 @@ function ROUTER_MT:use(path, ...)
 	for _, fn in ipairs(callbacks) do
 		local inf = debug.getinfo(fn, "S")
 		local infstr = inf.short_src .. ":" .. inf.linedefined
-		dprint("ROUTER_MT:use " .. path .. " " .. infstr) -- #todo debug.getinfo для fn, чтобы название вытащить, как в оригинале
+		dprint("ROUTER_MT:use %s %s", path, infstr) -- #todo debug.getinfo для fn, чтобы название вытащить, как в оригинале
 
 		local layer = LAYER_MT(path, { -- #todo вроде никакие из опций не реализованы
 			sensitive = self.caseSensitive,

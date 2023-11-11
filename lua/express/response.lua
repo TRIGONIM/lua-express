@@ -1,4 +1,4 @@
-local json_encode = require("cjson").encode
+local json_encode = require("cjson").encode -- #todo заменить на небинарный модуль
 
 local RES_MT = {}
 RES_MT.__index = RES_MT

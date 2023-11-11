@@ -5,7 +5,7 @@ local dprint = require("express.utils").debugPrint
 
 local ROUTE_MT = setmetatable({}, {
 	__call = function(self, path)
-		dprint("ROUTE_MT new " .. path)
+		dprint("new %s", path)
 		return setmetatable({
 			path = path,
 			stack = {},
@@ -88,7 +88,7 @@ for _, method in ipairs( methods ) do
 		-- PRINT({"route.lua ROUTE_MT", method = method, path = self.path, handles = handles})
 		-- print(debug.traceback("ROUTE_MT"))
 		for _, handle in ipairs(handles) do
-			dprint("ROUTE_MT:" .. method .. "('" .. self.path .. "')")
+			dprint(":%s('%s')", method, self.path)
 
 			local layer = LAYER_MT("/", {}, handle)
 			layer.method = method
