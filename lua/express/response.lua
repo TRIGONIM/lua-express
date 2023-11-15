@@ -3,8 +3,8 @@ local json_encode = require("cjson").encode -- #todo заменить на не�
 local RES_MT = {}
 RES_MT.__index = RES_MT
 
-function RES_MT:setstatus(code) -- #todo в оригинале называется :status, но pegasus использует .status для своих нужд
-	self:statusCode(code) -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L119
+function RES_MT:setstatus(code, message_) -- #todo в оригинале называется :status, но pegasus использует .status для своих нужд
+	self:statusCode(code, message_) -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L119
 	return self
 end
 
