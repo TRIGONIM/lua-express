@@ -245,7 +245,13 @@ end
 -- function APP_MT:render() end
 
 -- #todo тут в оригинале вызывается функция с самого nodejs. Пришлось сделать свою реализацию
-function APP_MT:listen(port, host, sslparams)
+function APP_MT:listen(port, callback, host, sslparams)
+	if type(callback) ~= "function" then
+		sslparams = host
+		host = callback
+		callback = nil
+	end
+
 	host = host or "*"
 	port = port or 3000
 
@@ -301,10 +307,12 @@ function APP_MT:listen(port, host, sslparams)
 	io.stderr:write("express.lua is up on " .. (sslparams and "https" or "http") .. "://" .. server_ip .. ":" .. server_port .. "/\n")
 
 	if not copas.running then
-		copas.loop()
+		copas.loop(callback and function()
+			callback(server_sock)
+		end)
+	elseif callback then
+		callback(server_sock)
 	end
-
-	return server_sock, nil
 end
 
 return APP_MT
