@@ -49,7 +49,7 @@ function RES_MT:send(body)
 	end
 
 	-- etag можно позаимствовать тут: https://github.com/creationix/weblit/blob/master/libs/weblit-etag-cache.lua
-	local etagFn = app:get("etag fn") -- #todo пока что функция не реализована и etag никогда не делается, хотя код ниже подготовлен
+	local etagFn = app.settings["etag fn"] -- #todo пока что функция не реализована и etag никогда не делается, хотя код ниже подготовлен
 	local generateETag = self:get("ETag") and type(etagFn) == "function"
 
 	local len

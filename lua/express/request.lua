@@ -1,5 +1,6 @@
 local getPathname = require("express.utils").getPathname
 -- local dprint      = require("express.utils").debugPrint
+local proxyaddr   = require("express.misc.proxy_addr")
 
 local REQ_MT = {}
 REQ_MT.__index = REQ_MT
@@ -40,18 +41,18 @@ function REQ_MT:protocol()
 	-- Пока что не уверен, что правильно реализовал, поскольку не понимаю как заменить нодовский this.connection.encrypted
 
 	local proto = "http"
-	if self.client.socket.info then -- функция, которой нет, если в параметрах сервера не указать sslparams
+	if self.pg_req.client.socket.info then -- функция, которой нет, если в параметрах сервера не указать sslparams
 		proto = "https"
 	end
 
-	local trust = self.app:get("trust proxy fn") or function(a, b, c) print("Не понимаю что это", a, b, c) end
-	if not trust(self.ip, 0) then -- req.ip is pegasus field
+	local trust = self.app.settings["trust proxy fn"]
+	if not trust(self.pg_req.ip, 0) then
 		return proto
 	end
 
 	local header = self:get("X-Forwarded-Proto") or proto
 	if header:find(",") then
-		return header:match("(.+),") -- если я правильно понял, то в хедере через запятую просто может быть несколько протоколов. Мы берем первый
+		return header:match("(.+),") -- take first
 	end
 end
 
@@ -62,14 +63,14 @@ end
 
 -- Return the remote address from the trusted proxy.
 -- The is the remote address on the socket unless "trust proxy" is set.
--- function REQ_MT:ip()
--- 	local trust = self.app:get("trust proxy fn") or function(a, b) print("Опять не понимаю что это #2", a, b) end
--- 	return proxyaddr(self, trust) -- proxyaddr не реализован. Пока лень
--- end
+function REQ_MT:ip()
+	local trust = self.app.settings["trust proxy fn"]
+	return proxyaddr.proxyaddr(self, trust)
+end
 
 
--- function REQ_MT:ips() -- как и выше, пока что лень реализовывать
--- 	local trust = self.app:get("trust proxy fn") or function(a, b) print("Опять не понимаю что это #3", a, b) end
+-- function REQ_MT:ips() -- #todo пока что лень реализовывать
+-- 	local trust = self.app.settings["trust proxy fn"]
 -- 	local addrs = {}
 -- 	return addrs
 -- end
@@ -82,13 +83,13 @@ function REQ_MT:path()
 end
 
 function REQ_MT:hostname()
-	local trust = self.app:get("trust proxy fn") or function(a, b) print("Опять не понимаю что это #4", a, b) end
+	local trust = self.app.settings["trust proxy fn"]
 	local host = self:get("X-Forwarded-Host")
 
-	if not host or not trust(self.ip, 0) then
+	if not host or not trust(self.pg_req.ip, 0) then
 		host = self:get("Host")
 	elseif host:find(",") then
-		host = host:match("(.+),") -- если я правильно понял, то в хедере через запятую просто может быть несколько хостов. Мы берем первый
+		host = host:match("(.+),") -- 1st host
 	end
 
 	if host then

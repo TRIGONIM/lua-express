@@ -6,6 +6,7 @@ local socket       = require("socket")
 
 local finalhandler = require("express.misc.finalhandler")
 local methods      = require("express.misc.methods")
+local proxyaddr    = require("express.misc.proxy_addr")
 
 local dprint       = require("express.utils").debugPrint
 
@@ -27,6 +28,11 @@ function APP_MT:defaultConfiguration()
 	local env = os.getenv("LUA_ENV") or "development"
 
 	self:enable("x-powered-by")
+	self:set("etag", "weak") -- #todo
+	self:set("env", env)
+	-- self:set("query parser", "extended") -- #todo не реализовано?
+	-- self:set("subdomain offset", 2) -- #todo не реализовано?
+	self:set("trust proxy", false)
 
 	dprint("booting in %s mode", env)
 
@@ -35,23 +41,12 @@ function APP_MT:defaultConfiguration()
 	self.locals = {} -- #todo что это и зачем? Просто для удобства людей?
 	self.locals.settings = self.settings -- тогда это зачем?
 
-	-- // default configuration
-	-- this.set('view', View);
-	-- this.set('views', resolve('views'));
-	-- this.set('jsonp callback name', 'callback');
-
 	if env == "production" then
 		self:enable("view cache") -- #todo не реализовано?
 	end
 end
 
 local ROUTER_MT = require("express.router")
-
--- local function setPrototypeOf(obj, prototype)
--- 	local mt = getmetatable(obj) or {}
--- 	mt.__index = prototype
--- 	setmetatable(obj, mt)
--- end
 
 function APP_MT:lazyrouter()
 	if not self._router then
@@ -163,9 +158,34 @@ function APP_MT:param(name, fn)
 	return self
 end
 
+local compile_trust = function(val)
+	if type(val) == "function" then return val end
+	if val == true then return function() return true end end
+	if type(val) == "number" then return function(_, i) return i <= val end end
+
+	if type(val) == "string" then
+		local vals = {}
+		for v in val:gmatch("[^,]+") do
+			table.insert(vals, v:match("^%s*(.-)%s*$")) -- trim
+		end
+		val = vals
+	end
+
+	return proxyaddr.compile(val or {})
+end
+
 function APP_MT:set(setting, value)
 	dprint("set '%s' to %s", setting, value)
 	self.settings[setting] = value
+
+	if setting == "trust proxy" then
+		self:set("trust proxy fn", compile_trust(value))
+	-- elseif setting == "etag" then -- #todo
+	-- 	self:set("etag fn", function() end)
+	-- elseif setting == "query parser" then
+	-- 	self:set("query parser fn", function() end)
+	end
+
 	return self
 end
 
@@ -196,14 +216,6 @@ function APP_MT:disable(setting)
 end
 
 for _, method in ipairs( methods ) do
-	-- express.handlers[method] = express.handlers[method] or {}
-
-	-- --- app:get(path, callback), app:post, etc
-	-- APP_MT[method] = function(self, path, callback)
-	-- 	express.handlers[method][path] = callback
-	-- 	return nil
-	-- end
-
 	APP_MT[method] = function(self, path, ...) -- ... is callbacks
 		local callbacks = {...}
 
