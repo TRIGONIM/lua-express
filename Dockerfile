@@ -43,12 +43,7 @@ RUN set -eux && \
 
 RUN rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g 1000 luaexpress && \
-    useradd -r -u 1000 -g luaexpress luaexpress
-
-USER luaexpress
-
-COPY --chown=luaexpress:luaexpress ./lua /usr/local/share/lua/5.1
+COPY ./lua /usr/local/share/lua/5.1
 
 WORKDIR /usr/local/share/lua/5.1/express
 
