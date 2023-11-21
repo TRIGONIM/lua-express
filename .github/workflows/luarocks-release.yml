@@ -1,0 +1,35 @@
+# source: https://github.com/TRIGONIM/lua-requests-async/blob/main/.github/workflows/release.yml
+name: "Release"
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  luarocks-upload:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: LuaRocks Upload
+        uses: nvim-neorocks/luarocks-tag-release@v4
+        env:
+          LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
+        with:
+          summary: "A minimalistic web framework for Lua"
+          detailed_description: |
+            Create complete web applications of any complexity in Lua with minimal dependencies.
+            Easy to embed in any application. All requests are executed non-blocking (asynchronously).
+            There is support for almost all methods from express.js.
+            Several highly loaded web applications are already running on lua-express.
+            More info: https://github.com/TRIGONIM/lua-express/
+          dependencies: |
+            copas >= 4.7.0
+            luasocket
+            lua-cjson
+            pegasus
+          labels: |
+            express
+            web
+            framework
+            async
