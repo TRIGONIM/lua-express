@@ -30,7 +30,7 @@ function APP_MT:defaultConfiguration()
 
 	dprint("booting in %s mode", env)
 
-	self.mountpath = "/" -- pegasus:new{location = "/"}
+	self.mountpath = "/" -- #todo implement
 
 	self.locals = {} -- #todo что это и зачем? Просто для удобства людей?
 	self.locals.settings = self.settings -- тогда это зачем?
@@ -60,26 +60,21 @@ function APP_MT:lazyrouter()
 			-- strict =
 		})
 
-		-- self._router:use(function(req, res, next) -- #todo self:get("query parser fn")
-		-- 	req.query = self.pegasus_res.querystring
-		-- 	next()
-		-- end)
+		self._router:use(function(req, res, next) -- #todo self:get("query parser fn")
+			req.query = req.pg_req.querystring
+			next()
+		end)
 		self._router:use(function(req, res, next)
-			if self:enabled("x-powered-by") then res:addHeader("X-Powered-By", "LuaExpress") end -- #todo в этом месте еще нет собственной метатаблицы, поэтому используется метод от pegasus. Возможно, лучше перенести ниже и использовать :set для хедера
+			if self:enabled("x-powered-by") then res.pg_res:addHeader("X-Powered-By", "LuaExpress") end
 
 			req.res = res -- для доступа к res изнутри req. Обновления хедера Etag и Last-Modified (сам не понял)
 			res.req = req -- Например, if req.method == HEAD: dontSendBody()
 			req.next = next
 
-			-- setPrototypeOf(req, self.request)
-			-- setPrototypeOf(res, self.response)
+			setmetatable(req, {__index = self.request})
+			setmetatable(res, {__index = self.response})
 
-			local req_mt = getmetatable(req)
-			local res_mt = getmetatable(res)
-			setmetatable(req_mt, {__index = self.request}) -- устанавливаем метатаблицу метатаблице для многоуровневого наследования
-			setmetatable(res_mt, {__index = self.response})
-
-			-- res.locals = {} -- #todo для рендера вроде
+			-- res.locals = {} -- #todo for the render feature I think
 
 			next()
 		end)
@@ -90,7 +85,7 @@ function APP_MT:handle(req, res, callback)
 	local router = self._router
 
 	local done = callback or finalhandler(req, res, {
-		onerror = function(err) -- './pega/application.lua:81: attempt to index field 'pegasus_res' (a nil value)'
+		onerror = function(err)
 			dprint("finalhandler error: %s", err)
 		end
 	})
@@ -115,7 +110,6 @@ local handleMiddleware = function(fn)
 	end
 end
 
--- #todo функция абсолютно сырая и кажется, не будет работать
 function APP_MT:use(path, ...)
 	local fns = {...}
 
@@ -244,6 +238,29 @@ end
 -- #todo массивно, сейчас не хочу углубляться
 -- function APP_MT:render() end
 
+local wrap_req, wrap_res do
+	wrap_req = function(req)
+		return setmetatable({
+			-- Is needed for express to be similar to nodejs
+			url     = req:path(), -- /hello/world?foo=bar
+			method  = req:method(), -- GET/POST etc
+			headers = req:headers(),
+
+			pg_req = req,
+		}, {
+			__index = req
+		})
+	end
+
+	wrap_res = function(res)
+		return setmetatable({
+			pg_res = res,
+		}, {
+			__index = res
+		})
+	end
+end
+
 -- #todo тут в оригинале вызывается функция с самого nodejs. Пришлось сделать свою реализацию
 function APP_MT:listen(port, callback, host, sslparams)
 	if type(callback) ~= "function" then
@@ -278,30 +295,21 @@ function APP_MT:listen(port, callback, host, sslparams)
 		return nil, "failed to get server socket name; " .. tostring(server_port)
 	end
 
-	copas.autoclose = false -- чтобы от next() в коде был смысл. Подробнее: https://t.me/c/1473957119/169428
+	-- Without this, asynchronous code such as timer.Simple(3, function() next() end)
+	-- will not work and the application will close the connection before next() is executed.
+	copas.autoclose = false
 	copas.addserver(server_sock, copas.handler(function(client_sock)
 
-		local req = PG_Request:new(port, client_sock) -- #todo в будущем просто перенести функционал в сам express, чтобы не зависеть от pegasus. 🔥 Тогда можно будет и res:status вместо :setstatus вернуть
-		if not req:method() then client_sock:close() return end
+		local pg_req = PG_Request:new(port, client_sock)
+		if not pg_req:method() then client_sock:close() return end
 
-		local writeHandler = {} -- _writeHandler, костыль из-за кода pegasus.lua (его там не должно было быть)
+		local writeHandler = {} -- crutch because of the pegasus.lua code (it should not be there)
 		function writeHandler:processBodyData(body) return body end
 
-		local res = PG_Response:new(client_sock, writeHandler)
-		-- res.request = req -- #todo проверить, используется ли где-то. Если нет – удалить. В express есть res.req
+		local pg_res = PG_Response:new(client_sock, writeHandler)
+		pg_res:statusCode(200) -- without this request will be executed without default status as HTTP/0.9
 
-		-- Нужно для express, чтобы быть похожим на настоящий nodejs
-		req.url     = req:path() -- /bla/bla?kek=lol
-		req.method  = req:method() -- GET/POST etc
-		req.headers = req:headers() -- #todo в node они lower-case, тут не проверял. И в express вроде не используется, так что мб надо удалить
-		-- res.headers = res._headers -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L103
-		req.query   = req.querystring
-
-		res:statusCode(200)
-		-- res.headers = {}
-		-- res:addHeader("Content-Type", "text/html; charset=utf-8")
-
-		self:handle(req, res)
+		self:handle(wrap_req(pg_req), wrap_res(pg_res))
 	end, sslparams))
 
 	io.stderr:write("express.lua is up on " .. (sslparams and "https" or "http") .. "://" .. server_ip .. ":" .. server_port .. "/\n")

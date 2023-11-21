@@ -3,8 +3,10 @@ local json_encode = require("cjson").encode -- #todo заменить на не�
 local RES_MT = {}
 RES_MT.__index = RES_MT
 
-function RES_MT:setstatus(code, message_) -- #todo в оригинале называется :status, но pegasus использует .status для своих нужд
-	self:statusCode(code, message_) -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L119
+function RES_MT:status(code)
+	local status_text
+	if code == 429 then status_text = "Too Many Requests" end -- https://github.com/EvandroLG/pegasus.lua/pull/134
+	self.pg_res:statusCode(code, status_text)
 	return self
 end
 
@@ -63,25 +65,25 @@ function RES_MT:send(body)
 	end
 
 	-- #todo :fresh не реализован
-	-- if req:fresh() then self:setstatus(304) end
+	-- if req:fresh() then self:status(304) end
 
-	if self.status == 204 or self.status == 304 then
+	if self.pg_res.status == 204 or self.pg_res.status == 304 then
 		self:set("Content-Type", nil)
 		self:set("Content-Length", nil)
 		self:set("Transfer-Encoding", nil)
 		chunk = ""
 	end
 
-	if self.status == 205 then
+	if self.pg_res.status == 205 then
 		self:set("Content-Length", 0)
 		self:set("Transfer-Encoding", nil)
 		chunk = ""
 	end
 
 	if req.method == "HEAD" then
-		self:sendOnlyHeaders() -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L165C18-L165C36
+		self.pg_res:sendOnlyHeaders()
 	else
-		self:write(chunk) -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L196C35-L196C35
+		self.pg_res:write(chunk)
 	end
 
 	return self
@@ -102,12 +104,11 @@ end
 
 -- Упрощено от оригинала. Не знаю, могут ли быть ощутимые последствия, но маловероятно
 function RES_MT:sendStatus(statusCode)
-	return self:writeDefaultErrorMessage(statusCode) -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L144C37-L144C37
+	return self.pg_res:writeDefaultErrorMessage(statusCode)
 end
 
--- 🔥 #TODO ВНУТРИ МЕТОДА ИСПОЛЬЗУЕТСЯ ФУНКЦИЯ ИЗ PEGASUS С ТАКИМ ЖЕ НАЗВАНИЕМ
 function RES_MT:sendFile(path) -- options, callback
-	local ok = self:sendFile(path) -- ,err. https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L252
+	local ok = self.pg_res:sendFile(path)
 	if not ok then
 		self:sendStatus(404)
 	end
@@ -144,9 +145,9 @@ end
 -- set headers https://expressjs.com/en/5x/api.html#res.set
 function RES_MT:set(header_name, value)
 	if type(header_name) == "table" then
-		self:addHeaders(header_name)
+		self.pg_res:addHeaders(header_name)
 	else
-		self:addHeader(header_name, value)
+		self.pg_res:addHeader(header_name, value)
 	end
 	return self
 end
@@ -154,7 +155,7 @@ RES_MT.header = RES_MT.set
 
 -- get value for header `field`
 function RES_MT:get(field)
-	return self._headers[field]
+	return self.pg_res._headers[field]
 end
 
 function RES_MT:clearCookie(name, options)
@@ -217,10 +218,10 @@ function RES_MT:redirect(url, status)
 		body = "Redirecting to " .. address .. "."
 	end
 
-	self:setstatus(status or 302):set("Content-Length", body:len())
+	self:status(status or 302):set("Content-Length", body:len())
 
 	if self.req.method == "HEAD" then
-		self:sendOnlyHeaders()
+		self.pg_res:sendOnlyHeaders()
 	else
 		self:send(body)
 	end

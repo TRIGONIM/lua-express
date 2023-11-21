@@ -100,7 +100,7 @@ end
 -- function REQ_MT:fresh() -- #todo не реализована одна функция
 -- 	local method = self.method
 -- 	local res = self.res
--- 	local status = res.status -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L121
+-- 	local status = res.pg_res.status
 
 -- 	if method ~= "GET" and method ~= "HEAD" then return false end
 

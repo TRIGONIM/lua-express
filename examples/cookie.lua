@@ -25,7 +25,7 @@ app:get("/", function(req, res)
 	if secret == SECRET then
 		res:send("Hello")
 	else
-		res:setstatus(403):send("You don't know the secret")
+		res:status(403):send("You don't know the secret")
 	end
 end)
 

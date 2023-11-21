@@ -35,7 +35,7 @@ local send = function(req, res, status, headers, msg)
 	local body = createHtmlDocument(msg)
 
 	if status then
-		res:setstatus(status)
+		res:status(status)
 	end
 
 	res:set("Content-Encoding", nil)
@@ -49,10 +49,10 @@ local send = function(req, res, status, headers, msg)
 	res:set("Content-Security-Policy", "default-src 'none'")
 	res:set("X-Content-Type-Options", "nosniff")
 	res:set("Content-Type", "text/html; charset=utf-8")
-	res:set("Content-Length", body:len()) -- сейчас ни на что не влияет. Оверрайдится тут: https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L180C29-L180C35
+	res:set("Content-Length", body:len()) -- doesn't affect anything right now. Overrides here: https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L180C29-L180C35
 
 	if req.method == "HEAD" then
-		res:sendOnlyHeaders() -- https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L165C19-L165C36
+		res.pg_res:sendOnlyHeaders()
 		return
 	end
 
@@ -66,17 +66,15 @@ local getErrorStatusCode = function(err)
 	end
 end
 
--- #todo добавить реализацию https://github.com/pillarjs/finalhandler/blob/master/index.js#L86
 local finalhandler = function(req, res, options)
 	local opts = options or {}
 	local env = opts.env or os.getenv("LUA_ENV") or "development"
 	local onerror = opts.onerror
 
 	return function(err)
-		local headers, msg, status -- #todo headers не используется из-за упрощения функции
+		local headers, msg, status
 
-		-- res._headersSended: https://github.com/EvandroLG/pegasus.lua/blob/2a3f4671f45f5111c14793920771f96b819099ab/src/pegasus/response.lua#L89C9-L89C24
-		if not err and res._headersSended then print("cannot 404 after headers sent") return end
+		if not err and res.pg_res._headersSended then print("cannot 404 after headers sent") return end
 
 		if err and type(err) == "table" then
 			status = getErrorStatusCode(err)
@@ -92,9 +90,9 @@ local finalhandler = function(req, res, options)
 
 		elseif err then
 			status = 500
-			msg = env == "production"
-				and "Internal Server Error"
-				or debug.traceback(err)
+			msg = env == "development"
+				and debug.traceback(err)
+				or "Internal Server Error"
 		else
 			status = 404
 			msg = "Cannot " .. req.method .. " " .. string_URLEncode(req.url)
