@@ -73,6 +73,7 @@ local function compile(ips_or_subnets)
 	end
 end
 
+-- https://github.com/jshttp/forwarded/blob/af3830a175dbe316be3d943f505171c73853eb04/index.js#L24
 local function proxyaddr(req, trust)
 	assert(req.pg_req.ip, "req.pg_req.ip is nil. Probably it's a luasocket error")
 
