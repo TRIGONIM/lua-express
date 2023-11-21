@@ -66,10 +66,10 @@ local function compile(ips_or_subnets)
 		end
 	end
 
-	if #ips_or_subnets == 0 then
+	if #trust == 0 then
 		return function() return false end
 	else
-		return #ips_or_subnets == 1 and trustSingle(trust[1]) or trustMulti(trust)
+		return #trust == 1 and trustSingle(trust[1]) or trustMulti(trust)
 	end
 end
 
@@ -84,14 +84,19 @@ local function proxyaddr(req, trust)
 		table.insert(check_trust, ip)
 	end
 
-	local trusted = {}
-	for i, ip in ipairs(check_trust) do
-		if i == 1 or trust(ip) then
-			table.insert(trusted, ip)
+	-- brain explosion
+	-- если не верим адресу, то все следующие, кроме него отсекаем
+	-- таким образом, первый точно будет "доверенным"
+	for i = 1, #check_trust - 1 do
+		if not trust(check_trust[i]) then
+			for j = i + 1, #check_trust do
+				check_trust[j] = nil
+			end
+			break
 		end
 	end
 
-	return trusted[#trusted]
+	return check_trust[#check_trust]
 end
 
 return {
