@@ -1,4 +1,4 @@
-[![lua-express-banner](https://file.def.pm/v50V34N0.jpg)](https://luarocks.org/modules/AMD-NICK/lua-express)
+[![lua-express-banner](https://file.def.pm/hztitf4z.jpg)](https://luarocks.org/modules/AMD-NICK/lua-express)
 
 A minimalistic web framework for Lua. High-quality port of [express.js](https://github.com/expressjs/express/)
 
@@ -27,13 +27,13 @@ luarocks install lua-express
 
 ## Features:
 
-- ✅ Same features as the original express (except of rendering engine. temporarily) +
+- ✅ Same features as in the original express (except of rendering engine. temporarily) ➕
+- 🪞 API implementation and similarity with express.js is almost 100%. Even in small details 🔥
 - 🧩 Easy to embed into any existing lua applications of any complexity
-- 🪶 Lowest possible number of third-party dependencies
-- 🪞 API similarity with express.js is almost 100%. Even in small details
+- 🪶 Lowest possible amount of third-party dependencies
 - 🚀 Asynchronous (non-blocking) processing of incoming requests
 - 🛠️  Easy to extend and modify with third-party modules
-- 🏋️‍♂️ Several highly loaded web applications are already running on lua-express right now.
+- 🏋️‍♂️ Several highly loaded web applications are already running on lua-express right now
 
 
 ## Dependencies
