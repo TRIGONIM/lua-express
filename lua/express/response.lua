@@ -1,4 +1,4 @@
-local json_encode = require("cjson").encode -- #todo заменить на небинарный модуль
+local json_ok, json = pcall(require, "cjson")
 
 local RES_MT = {}
 RES_MT.__index = RES_MT
@@ -91,13 +91,18 @@ end
 
 -- send table as json https://expressjs.com/en/5x/api.html#res.json
 function RES_MT:json(obj)
-	local json = json_encode(obj) -- #todo что будет, если в obj будет функция? Ошибка, как обработать?
+	if not json_ok then
+		print("cannot res:json(): cjson is not installed")
+		return self
+	end
+
+	local jsn = json.encode(obj)
 
 	if not self:get("Content-Type") then
 		self:set("Content-Type", "application/json; charset=utf-8")
 	end
 
-	return self:send(json)
+	return self:send(jsn)
 end
 
 -- function RES_MT:jsonp() end

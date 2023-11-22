@@ -24,9 +24,8 @@ jobs:
             Several highly loaded web applications are already running on lua-express.
             More info: https://github.com/TRIGONIM/lua-express/
           dependencies: |
-            copas >= 4.7.0
+            copas
             luasocket
-            lua-cjson
             pegasus
           labels: |
             express
