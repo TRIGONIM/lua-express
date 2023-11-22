@@ -91,7 +91,7 @@ local finalhandler = function(req, res, options)
 		elseif err then
 			status = 500
 			msg = env == "development"
-				and debug.traceback(err)
+				and debug.traceback(err .. "\n")
 				or "Internal Server Error"
 		else
 			status = 404
