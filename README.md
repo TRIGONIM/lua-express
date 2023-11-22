@@ -56,7 +56,7 @@ luarocks install pegasus
 # not sure if this is really needed
 # luarocks install luasec
 
-git https://github.com/TRIGONIM/lua-express && cd lua-express
+git clone https://github.com/TRIGONIM/lua-express && cd lua-express
 
 # add local module path to LUA_PATH env
 export LUA_PATH="$(pwd)/lua/?.lua;$(pwd)/lua/?/init.lua;$LUA_PATH"
