@@ -56,7 +56,7 @@ function APP_MT:lazyrouter()
 		})
 
 		self._router:use(function(req, res, next) -- #todo self:get("query parser fn")
-			req.query = req.pg_req.querystring
+			req.query = req.pg_req.querystring -- #todo own function. pg_req should not be here
 			next()
 		end)
 		self._router:use(function(req, res, next)
@@ -257,6 +257,10 @@ local wrap_req, wrap_res do
 			url     = req:path(), -- /hello/world?foo=bar
 			method  = req:method(), -- GET/POST etc
 			headers = req:headers(),
+
+			socket  = req.client,
+
+			_ipaddr = req.client:getpeername(), -- internal cache
 
 			pg_req = req,
 		}, {

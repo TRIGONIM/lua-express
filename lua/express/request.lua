@@ -41,12 +41,12 @@ function REQ_MT:protocol()
 	-- Пока что не уверен, что правильно реализовал, поскольку не понимаю как заменить нодовский this.connection.encrypted
 
 	local proto = "http"
-	if self.pg_req.client.socket.info then -- функция, которой нет, если в параметрах сервера не указать sslparams
+	if self.socket.info then -- функция, которой нет, если в параметрах сервера не указать sslparams
 		proto = "https"
 	end
 
 	local trust = self.app.settings["trust proxy fn"]
-	if not trust(self.pg_req.ip, 0) then
+	if not trust(self._ipaddr, 0) then
 		return proto
 	end
 
@@ -86,7 +86,7 @@ function REQ_MT:hostname()
 	local trust = self.app.settings["trust proxy fn"]
 	local host = self:get("X-Forwarded-Host")
 
-	if not host or not trust(self.pg_req.ip, 0) then
+	if not host or not trust(self._ipaddr, 0) then
 		host = self:get("Host")
 	elseif host:find(",") then
 		host = host:match("(.+),") -- 1st host

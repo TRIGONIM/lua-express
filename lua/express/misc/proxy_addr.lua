@@ -75,9 +75,9 @@ end
 
 -- https://github.com/jshttp/forwarded/blob/af3830a175dbe316be3d943f505171c73853eb04/index.js#L24
 local function proxyaddr(req, trust)
-	assert(req.pg_req.ip, "req.pg_req.ip is nil. Probably it's a luasocket error")
+	assert(req._ipaddr, "req._ipaddr is nil. Probably it's a luasocket error")
 
-	local check_trust = {req.pg_req.ip}
+	local check_trust = {req._ipaddr}
 	local xff = req:get("x-forwarded-for") or ""
 	for ip in xff:gmatch("[^,]+") do
 		ip = ip:match("^%s*(.-)%s*$") -- trim
