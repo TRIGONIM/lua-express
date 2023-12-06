@@ -14,10 +14,8 @@ router:get("/info", function(req, res)
 	-- require("gmod.globals").PrintTable(req)
 
 	res:json({
-		-- The req.body doesn't exist by default in express, you need custom bodyparser middleware for it.
-		-- I've already written one for myself, but I'm testing it for now.
-		-- If you need it too - create an issue and I will finally publish it
-		body    = req.body or "not set", -- requires bodyparser middleware.
+		body    = req.body or "not set", -- requires body-parser middleware (https://github.com/TRIGONIM/lua-express-middlewares)
+		cookies = req.cookies or "not set", -- {["cookie-name"] = "cookie-value"} (https://github.com/TRIGONIM/lua-express-middlewares)
 		headers = req.headers, -- {["lower-case-name"] = "value"}
 		ip      = req:ip(), -- app:set("trust proxy", {"uniquelocal"}) implemented: https://expressjs.com/en/guide/behind-proxies.html
 		query   = req.query, -- /info?query=string > {query = "string"}

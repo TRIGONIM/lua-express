@@ -1,27 +1,15 @@
 -- package.path = package.path .. ";../lua/?.lua;../lua/?/init.lua"
 
 local express = require("express")
+local cookie_parser = require("cookie-parser") -- https://github.com/TRIGONIM/lua-express-middlewares
 local app = express()
 
--- cookie parser middleware
-app:use(function(req, _, next)
-	local cookie = req:get("cookie")
-	if cookie then
-		local cookies = {}
-		for k, v in cookie:gmatch("([^=]+)=([^;]+)") do
-			cookies[k] = v
-		end
-		req.cookies = cookies
-	else
-		req.cookies = {}
-	end
-	next()
-end)
+app:use( cookie_parser() )
 
 local SECRET = "SyperS3cret"
 
 app:get("/", function(req, res)
-	local secret = req.cookies.secret
+	local secret = req.cookies and req.cookies.secret
 	if secret == SECRET then
 		res:send("Hello")
 	else
