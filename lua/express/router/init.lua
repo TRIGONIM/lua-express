@@ -6,17 +6,24 @@ local dprint = require("express.utils").debugPrint
 
 local getPathname = require("express.utils").getPathname
 
+--- @class ExpressRouterLayer
+--- @field route ExpressRouterRoute?
+
+--- @class ExpressRouter: ExpressRouterBase
+--- @overload fun(options?: table): ExpressRouter
 local ROUTER_MT = setmetatable({}, {
 	__call  = function(self, options)
 		local opts = options or {}
 
-		return setmetatable({
-			params = {},
-			caseSensitive = opts.caseSensitive,
+		local router = { --- @class ExpressRouterBase
+			params = {}, --- @type table
+			caseSensitive = opts.caseSensitive, --- @type boolean
 			-- mergeParams = opts.mergeParams, -- the reason of comment below in file
-			strict = opts.strict,
-			stack = {}
-		}, self)
+			strict = opts.strict, --- @type boolean
+			stack = {}, --- @type ExpressRouterLayer[]
+		}
+
+		return setmetatable(router, self)
 	end,
 })
 ROUTER_MT.__index = ROUTER_MT
@@ -405,6 +412,9 @@ function ROUTER_MT:route(path)
 end
 
 local _add_method = function(method)
+	--- @param path string like "/user/:id"
+	--- @param ... ExpressMiddleware -- router handlers (middlewares)
+	--- @return ExpressRouter
 	ROUTER_MT[method] = function(self, path, ...)
 		local route = self:route(path)
 		-- dprint("routerR_MT:" .. method .. "(" .. path .. ")")
@@ -412,6 +422,17 @@ local _add_method = function(method)
 		return self
 	end
 end
+
+--- @alias ExpressRouterMethod fun(self: ExpressRouter, path: string, ...: ExpressMiddleware): ExpressRouter
+
+--- #todo Annotate dynamically https://github.com/LuaLS/lua-language-server/discussions/2444
+
+--- @class ExpressRouter
+--- @field all ExpressRouterMethod handles all methods (GET, POST, etc)
+--- @field get ExpressRouterMethod handles only GET method
+--- @field post ExpressRouterMethod handles only POST method
+---- @field head ExpressRouterMethod
+---- @field options ExpressRouterMethod
 
 _add_method("all")
 for _, method in ipairs(methods) do

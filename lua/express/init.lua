@@ -11,8 +11,17 @@ local RES_MT = require("express.response")
 local ROUTER_MT = require("express.router")
 local ROUTE_MT  = require("express.router.route")
 
+--- @class ExpressApplication
+--- @field request ExpressRequest
+--- @field response ExpressResponse
 
+--- @class ExpressRequest
+--- @field app ExpressApplication
 
+--- @class ExpressResponse
+--- @field app ExpressApplication
+
+--- @return ExpressApplication
 express.createApplication = function()
 	local app = setmetatable({}, APP_MT)
 
@@ -37,5 +46,7 @@ express.Router = ROUTER_MT;
 -- express.static = require('serve-static');
 -- express.text = bodyParser.text
 -- express.urlencoded = bodyParser.urlencoded
+
+--- @alias ExpressMiddleware fun(req: ExpressRequest, res: ExpressResponse, next: fun(err?: any))
 
 return express

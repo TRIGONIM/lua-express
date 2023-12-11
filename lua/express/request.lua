@@ -1,7 +1,13 @@
 local getPathname = require("express.utils").getPathname
 -- local dprint      = require("express.utils").debugPrint
 local proxyaddr   = require("express.misc.proxy_addr")
+local accepts     = require("express.misc.accepts")
 
+--- @class ExpressRequest
+--- @field params table? `app:get("/user/:id", ...)` -> req.params.id
+--- @field query table? querystring parsed
+--- @field baseUrl string /prefixed/route for router:get("/info", ...)
+--- @field originalUrl string /prefixed/route/info for router:get("/info", ...)
 local REQ_MT = {}
 REQ_MT.__index = REQ_MT
 
@@ -10,8 +16,20 @@ function REQ_MT:get(name)
 end
 REQ_MT.header = REQ_MT.get
 
--- https://github.com/expressjs/express/blob/2a00da2067b7017f769c9100205a2a5f267a884b/lib/request.js#L132
--- function REQ_MT:accepts(...) end
+--- @return false|string `false` if not accepted, or mime type `string` if accepted
+function REQ_MT:accepts(...)
+	local types = {...}
+
+	for _, type in ipairs(types) do
+		local header_accept = self:get("accept")
+		if not header_accept then return false end
+
+		local accepted = accepts(header_accept, type)
+		if accepted then return accepted end
+	end
+
+	return false
+end
 
 -- function REQ_MT:acceptsEncodings(...) end
 -- function REQ_MT:acceptsCharsets(...) end
@@ -35,7 +53,7 @@ end
 -- header field, and it contains the given mime `type`.
 -- function REQ_MT:is(...) local types = {...} end
 
--- Return the protocol string "http" or "https"
+--- @return "https"|"http"
 function REQ_MT:protocol()
 	-- #todo https://github.com/brunoos/luasec/wiki/LuaSec-1.3.x#conngetpeercertificaten
 	-- Пока что не уверен, что правильно реализовал, поскольку не понимаю как заменить нодовский this.connection.encrypted
@@ -54,6 +72,8 @@ function REQ_MT:protocol()
 	if header:find(",") then
 		return header:match("(.+),") -- take first
 	end
+
+	return header
 end
 
 -- Short-hand for: req:protocol() == 'https'
@@ -63,6 +83,7 @@ end
 
 -- Return the remote address from the trusted proxy.
 -- The is the remote address on the socket unless "trust proxy" is set.
+--- @return string ip address
 function REQ_MT:ip()
 	local trust = self.app.settings["trust proxy fn"]
 	return proxyaddr.proxyaddr(self, trust)

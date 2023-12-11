@@ -13,12 +13,21 @@ local dprint       = require("express.utils").debugPrint
 local unpack = unpack or table.unpack
 
 
+--- @class ExpressRequest
+--- @field res ExpressResponse
+--- @field next fun(err?: any) #todo describe as @alias somewhere
+
+--- @class ExpressResponse
+--- @field req ExpressRequest
+
+--- @class ExpressApplication
+--- @field parent ExpressApplication?
 local APP_MT = {}
 APP_MT.__index = APP_MT
 
 function APP_MT:init()
 	-- self.cache = {} -- только для self:render()
-	-- self.engines = {}
+	-- self.engines = {} -- in several places
 	self.settings = {}
 
 	self:defaultConfiguration();
@@ -76,6 +85,10 @@ function APP_MT:lazyrouter()
 	end
 end
 
+---handle incoming requests. req should already have url, method, headers etc fields
+---@param req ExpressRequest
+---@param res ExpressResponse
+---@param callback? fun(err?: any) -- it's error 404 if err is nil
 function APP_MT:handle(req, res, callback)
 	local router = self._router
 
@@ -95,8 +108,10 @@ function APP_MT:handle(req, res, callback)
 end
 
 local handleMiddleware = function(fn)
+
+	--- @type ExpressMiddleware
 	return function(req, res, next)
-		local orig = req.app -- #todo req.app реализован?
+		local orig = req.app
 		fn(req, res, function(err)
 			setmetatable(req, { __index = orig.request }) -- #todo вроде убрал из express.lua и нижнее
 			setmetatable(res, { __index = orig.response })
@@ -105,6 +120,9 @@ local handleMiddleware = function(fn)
 	end
 end
 
+---@param path string|function default "/"
+---@param ... ExpressMiddleware
+---@return ExpressApplication
 function APP_MT:use(path, ...)
 	local fns = {...}
 
@@ -130,7 +148,7 @@ function APP_MT:use(path, ...)
 
 			setmetatable(app.request,  {__index = self.request})
 			setmetatable(app.response, {__index = self.response})
-			setmetatable(app.engines,  {__index = self.engines})
+			-- setmetatable(app.engines,  {__index = self.engines})
 			setmetatable(app.settings, {__index = self.settings})
 		else
 			local fnn = type(fn) == "table" and function(...) return fn:handle(...) end or fn -- router в app:use. #todo в оригинале там по сути __call в роутере, но я не могу сделать так же, потому что в lua функция это не объект
@@ -215,6 +233,18 @@ function APP_MT:disable(setting)
 	return self:set(setting, false)
 end
 
+--- @alias ExpressApplicationMethod fun(self: ExpressApplication, path: string, ...: function): ExpressApplication
+
+--- #todo Annotate dynamically https://github.com/LuaLS/lua-language-server/discussions/2444
+--- The same shit in router/init.lua
+
+--- @class ExpressApplication
+--- @field get ExpressApplicationMethod
+--- @field post ExpressApplicationMethod
+---- @field head ExpressApplicationMethod
+---- @field options ExpressApplicationMethod
+
+
 for _, method in ipairs( methods ) do
 	APP_MT[method] = function(self, path, ...) -- ... is callbacks
 		local callbacks = {...}
@@ -251,28 +281,37 @@ end
 -- function APP_MT:render() end
 
 local wrap_req, wrap_res do
-	wrap_req = function(req)
-		return setmetatable({
+	--- @return ExpressRequest
+	wrap_req = function(pg_req)
+		local req = { --- @class ExpressRequest
 			-- Is needed for express to be similar to nodejs
-			url     = req:path(), -- /hello/world?foo=bar
-			method  = req:method(), -- GET/POST etc
-			headers = req:headers(),
 
-			socket  = req.client,
+			url     = pg_req:path(), --- @type string /hello/world?foo=bar <br> /info for router:get("/info", ...)
+			method  = pg_req:method(), --- @type string GET/POST etc
+			headers = pg_req:headers(), --- @type table headers in lowercase
 
-			_ipaddr = req.client:getpeername(), -- internal cache
+			socket  = pg_req.client, --- @type table socket object #todo make it userdata
 
-			pg_req = req,
-		}, {
+			_ipaddr = pg_req.client:getpeername(), --- @type string? ip адрес сокет соединения (sock:getpeername()). В некоторых случаях почему-то был nil
+
+			pg_req = pg_req, --- @type table #todo PegasusRequest instead of table
+		}
+
+		return setmetatable(req, {
 			__index = req
 		})
 	end
 
-	wrap_res = function(res)
+	-- extend ExpressResponse class
+	--- @class ExpressResponse
+	--- @field pg_res table #todo PegasusResponse instead of table
+
+	--- @return ExpressResponse
+	wrap_res = function(pg_res)
 		return setmetatable({
-			pg_res = res,
+			pg_res = pg_res,
 		}, {
-			__index = res
+			__index = pg_res
 		})
 	end
 end

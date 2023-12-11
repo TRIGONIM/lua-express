@@ -1,5 +1,6 @@
 local json_ok, json = pcall(require, "cjson")
 
+--- @class ExpressResponse
 local RES_MT = {}
 RES_MT.__index = RES_MT
 

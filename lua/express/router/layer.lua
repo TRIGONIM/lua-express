@@ -7,6 +7,8 @@ local urldecode  = require("express.utils").urldecode
 -- - ROUTER_MT:use strict = false, end = false
 -- - ROUTER_MT:route strict = self.strict, end = true
 -- - ROUTE_MT:$method false, false
+--- @class ExpressRouterLayer: ExpressRouterLayerBase
+--- @overload fun(path: string, options?: table, fn: ExpressMiddleware): ExpressRouterLayer
 local LAYER_MT = setmetatable({}, {
 	__call = function(self, path, options, fn)
 		local opts = options or {}
@@ -18,21 +20,21 @@ local LAYER_MT = setmetatable({}, {
 
 		dprint("new %s (pattern: %s, strict: %s, end: %s)", path, pattern, opts.strict or "no", opts["end"] or "no")
 
-		return setmetatable({
-			handle = fn,
-			name = infstr,
-			params = nil, -- {foo = value, baz = value}
-			path = nil,
-
-			keys = keys, -- {"foo", "baz"} (/:foo/bar/:baz)
-
-			regexp = {
+		local layer = {    --- @class ExpressRouterLayerBase
+			handle = fn,   --- @type ExpressMiddleware
+			name = infstr, --- @type string generated function name (path and line defined)
+			params = nil,  --- @type table? /user/:id -> {id = value}
+			path = nil,    --- @type string? /user/:id -> /user
+			keys = keys,   --- @type string[] /user/:id -> {"id"}
+			regexp = {     --- @type table fields: {pattern, fast_star, fast_slash}
 				-- pathRegexp(path, self.keys or {}, opts) -- #todo lua patterns, self implementation
 				pattern = pattern, -- ^/([%w_]+)/bar/([%w_]+)(.*)$
 				fast_star  = path == "*",
 				fast_slash = path == "/" and opts["end"] == false,
 			},
-		}, self)
+		}
+
+		return setmetatable(layer, self)
 	end
 })
 LAYER_MT.__index = LAYER_MT
@@ -45,8 +47,8 @@ function LAYER_MT:handle_error(err, req, res, next)
 		return next(err)
 	end
 
-	local ok, err = pcall(fn, err, req, res, next)
-	if not ok then next(err) end
+	local ok, er = pcall(fn, err, req, res, next)
+	if not ok then next(er) end
 end
 
 -- Handle the request for the layer.

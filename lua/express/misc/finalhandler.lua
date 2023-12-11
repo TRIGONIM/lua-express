@@ -66,6 +66,9 @@ local getErrorStatusCode = function(err)
 	end
 end
 
+--- @param req ExpressRequest
+--- @param res ExpressResponse
+--- @param options table
 local finalhandler = function(req, res, options)
 	local opts = options or {}
 	local env = opts.env or os.getenv("LUA_ENV") or "development"

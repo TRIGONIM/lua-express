@@ -3,14 +3,21 @@ local methods  = require("express.misc.methods")
 
 local dprint = require("express.utils").debugPrint
 
+--- @class ExpressRouterLayer
+--- @field method string
+
+--- @class ExpressRouterRoute: ExpressRouterRouteBase
+--- @overload fun(path: string): ExpressRouterRoute
 local ROUTE_MT = setmetatable({}, {
 	__call = function(self, path)
 		dprint("new %s", path)
-		return setmetatable({
-			path = path,
-			stack = {},
-			methods = {}, -- method = true
-		}, self)
+
+		local route = {   --- @class ExpressRouterRouteBase
+			path = path,  --- @type string
+			stack = {},   --- @type ExpressRouterLayer[]
+			methods = {}, --- @type table<string, boolean> get = true etc.
+		}
+		return setmetatable(route, self)
 	end
 })
 ROUTE_MT.__index = ROUTE_MT
@@ -69,6 +76,8 @@ function ROUTE_MT:dispatch(req, res, done)
 	next()
 end
 
+--- @param ... ExpressMiddleware
+--- @return ExpressRouterRoute
 function ROUTE_MT:all(...)
 	local handles = {...}
 
@@ -83,6 +92,8 @@ function ROUTE_MT:all(...)
 end
 
 for _, method in ipairs( methods ) do
+	--- @param ... ExpressMiddleware
+	--- @return ExpressRouterRoute
 	ROUTE_MT[method] = function(self, ...)
 		local handles = {...}
 		-- PRINT({"route.lua ROUTE_MT", method = method, path = self.path, handles = handles})
