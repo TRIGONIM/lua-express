@@ -32,8 +32,19 @@ luarocks install lua-express
 - 🧩 Easy to embed into any existing lua applications of any complexity
 - 🪶 Lowest possible amount of third-party dependencies
 - 🚀 Asynchronous (non-blocking) processing of incoming requests
-- 🛠️  Easy to extend and modify with third-party modules
+- 🛠️ Easy to extend and modify with third-party modules
 - 🏋️‍♂️ Several highly loaded web applications are already running on lua-express right now
+
+## Examples:
+
+- 🍪 [Working with cookies](/examples/cookie.lua). Accessing a site with a secret cookie
+- 🧠 [Advanced example](/examples/simple-advanced/README.MD). Working with routers, using middlewares, handling errors, displaying request information
+- 🔗 [Client disconnection handler](/examples/disconnect_handler.lua). Simplest non-blocking implementation of client disconnection event
+
+### 🌈 Extra:
+
+- [Middlewares collection](https://github.com/TRIGONIM/lua-express-middlewares). Ready to use
+- [Long Polling Server](https://github.com/TRIGONIM/lua-long-polling). One more app written in lua-express
 
 
 ## Dependencies
@@ -45,6 +56,17 @@ luarocks install lua-express
 
 
 ## Development:
+
+<!-- original diagram source:
+https://github.com/kishanrajput23/Hacktoberfest-2022/blob/main/README.md#steps-to-follow-scroll -->
+
+```mermaid
+flowchart LR
+    Fork((Fork the project))
+	Fork-->Edit[Edit files]
+    Edit-->commit[Commit the changes]
+    commit-->|Finally|creatpr((Create a Pull Request))
+```
 
 ```bash
 luarocks install copas
