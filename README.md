@@ -5,7 +5,6 @@ A minimalistic web framework for Lua. High-quality port of [express.js](https://
 [![LuaRocks](https://img.shields.io/luarocks/v/AMD-NICK/lua-express)](https://luarocks.org/modules/AMD-NICK/lua-express)
 [![License](https://img.shields.io/github/license/TRIGONIM/lua-express)](LICENSE)
 [![Repo Size](https://img.shields.io/github/repo-size/TRIGONIM/lua-express)](https://github.com/TRIGONIM/lua-express/archive/refs/heads/master.zip)
-[![Docker Image Size](https://img.shields.io/docker/image-size/defaced/lua-express?label=docker%20image)](https://hub.docker.com/r/defaced/lua-express)
 
 
 ```lua
@@ -23,6 +22,9 @@ app:listen(3000)
 
 ```bash
 luarocks install lua-express
+
+# or
+docker pull ghcr.io/trigonim/lua-express:main
 ```
 
 ## Features:
@@ -71,12 +73,11 @@ flowchart LR
 ```bash
 luarocks install copas
 luarocks install pegasus
+# not sure if this is really needed :)
+luarocks install luasec
 
 # only for res:json(obj)
 # luarocks install lua-cjson
-
-# not sure if this is really needed
-# luarocks install luasec
 
 git clone https://github.com/TRIGONIM/lua-express && cd lua-express
 

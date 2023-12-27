@@ -1,8 +1,8 @@
-name: Build Docker Image
+name: Build Docker Image # source: https://github.com/TRIGONIM/lua-long-polling/blob/main/.github/workflows/docker-image.yml
 
 on:
   schedule:
-      - cron: '37 13 * * 1'
+    - cron: '37 13 * * 1'
   push:
     branches: [ "main" ]
     tags: [ 'v*.*.*' ]
