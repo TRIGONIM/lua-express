@@ -298,7 +298,7 @@ local wrap_req, wrap_res do
 		}
 
 		return setmetatable(req, {
-			__index = req
+			__index = pg_req
 		})
 	end
 
