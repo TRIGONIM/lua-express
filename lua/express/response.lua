@@ -1,4 +1,8 @@
 local json_ok, json = pcall(require, "cjson")
+local pathlib = require("express.misc.path")
+local isAbsolute = require("express.utils").isAbsolute
+-- local urldecode = require("express.utils").urldecode
+local string_split = require("express.utils").string_split
 
 --- @class ExpressResponse
 local RES_MT = {}
@@ -113,15 +117,163 @@ function RES_MT:sendStatus(statusCode)
 	return self.pg_res:writeDefaultErrorMessage(statusCode)
 end
 
-function RES_MT:sendFile(path) -- options, callback
-	local ok = self.pg_res:sendFile(path)
-	if not ok then
-		self:sendStatus(404)
+local containsDotFile = function(parts)
+	for i = 1, #parts do
+		local part = parts[i]
+		if #part > 1 and part:sub(1, 1) == "." then
+			return true
+		end
 	end
-	return self
+
+	return false
 end
 
--- function RES_MT:download(path, filename, options, callback) end
+-- Если указана папка
+-- Если указан путь типа ../file.txt ?
+-- А если /etc/passwd?
+-- В callback либо ошибка, либо nil
+-- For now supports only "root" and "headers" options
+function RES_MT:sendFile(path, options, callback)
+	if path == "" or path == nil then
+		error("path argument is required to res.sendFile")
+	end
+
+	if not options.root and not isAbsolute(path) then
+		error("path must be absolute or specify root to res:sendFile")
+	end
+
+	if options.headers then
+		self:set(options.headers)
+	end
+
+	-- В оригинальном экспресс здесь происходит urlencode, а дальше по стеку urldecode. Зачем? Не понял
+	-- path = urlencode(path)
+
+	----- /start эта часть взята из express/node_modules/send/index.js
+	-- path = urldecode(path)
+
+	local make_error = function(status, message)
+		return {status = status, message = message, filepath = path}
+	end
+
+	local UP_PATH_REGEXP = "(?:^|[\\/])%.%.(?:[\\/]|$)" -- #todo test
+	local parts = {}
+	if options.root then
+		path = pathlib.normalize("." .. "/" .. path)
+
+		if path:find(UP_PATH_REGEXP) then
+			return callback and callback(make_error(403, "Unsafe path regex"))
+		end
+
+		parts = string_split(path, "/")
+		path = pathlib.normalize(pathlib.join(options.root, path)) -- в итоге получается все равно /Users/amd/Downloads/tmp/express/examples/downloads/files/missing.txt
+	else
+		if path:find(UP_PATH_REGEXP) then
+			return callback and callback(make_error(403, "Unsafe path regex"))
+		end
+
+		local normalized = pathlib.normalize(path)
+		parts = string_split(normalized, "/")
+		path = pathlib.resolve(path)
+
+	end
+
+	if containsDotFile(parts) then
+		local access = options.dotfiles
+		if access == "allow" or access == "ignore" then
+			-- do nothing
+		elseif access == "deny" then
+			return callback and callback(make_error(403))
+		else
+			return callback and callback(make_error(404))
+		end
+	end
+	----- /end
+
+	local ok, err = self.pg_res:sendFile(path)
+	if callback then
+		local is_ENOENT = not ok and err:find("No such file or directory") -- #todo windows, multiplatform
+		return callback(is_ENOENT and (make_error(404, err) or nil)
+			or (not ok and make_error(nil, err) or nil))
+	end
+
+	local is_EISDIR = not ok and err:find("Is a directory")
+	if is_EISDIR then return self.req.next() end
+
+	-- next() all but write errors
+	if not ok and err then -- and err.code ~= "ECONNABORTED" and err.syscall ~= "write"
+		self.req.next({message = err})
+	end
+end
+
+--[[
+Transfer the file at the given `path` as an attachment.
+
+Optionally providing an alternate attachment `filename`,
+and optional callback `callback(err)`. The callback is invoked
+when the data transfer is complete, or when an error has
+occurred. Be sure to check `res.headersSent` if you plan to respond.
+
+Optionally providing an `options` object to use with `res.sendFile()`.
+This function will set the `Content-Disposition` header, overriding
+any `Content-Disposition` header passed as header options in order
+to set the attachment and filename.
+
+This method uses `res.sendFile()`.
+]]
+-- options can include "headers" and "root"
+-- filename_ unused because of the lack of motivation
+function RES_MT:download(path, filename_, options, callback)
+	-- local mpart_ok, Multipart = pcall(require, "multipart")
+	-- assert(mpart_ok, "You need to install the multipart module (https://github.com/Kong/lua-multipart)")
+
+	local done = callback
+	-- local name = filename_
+	local opts = options or nil
+
+	-- support function as second or third arg
+	if type(filename_) == "function" then
+		done = filename_
+		-- name = nil
+		opts = nil
+	elseif type(options) == "function" then
+		done = options
+		opts = nil
+	end
+
+	-- support optional filename, where options may be in its place
+	if type(filename_) == "table" and (type(options) == "function" or options == nil) then
+		-- name = nil
+		opts = filename_
+	end
+
+	-- set Content-Disposition when file is sent
+	-- local multipart_data = Multipart()
+	-- local headers = {
+	-- 	["Content-Disposition"] = contentDisposition(name or path)
+	-- }
+	local headers = {}
+
+	-- merge user-provided headers except Content-Disposition
+	if opts and opts.headers then
+		for key, value in pairs(opts.headers) do
+			if string.lower(key) ~= "content-disposition" then
+				headers[key] = value
+			end
+		end
+	end
+
+	-- merge user-provided options
+	opts = opts or {}
+	opts.headers = headers
+
+	-- Resolve the full path for sendFile
+	local fullPath = not opts.root and pathlib.resolve(path) or path
+
+	-- send file
+	return self:sendFile(fullPath, opts, done)
+end
+
 function RES_MT:type(typ)
 	-- #todo mime.lookup https://github.com/tst2005/lua-mimetypes/blob/fd570b2dff729b430c42d7bd6a767c197d38384b/mimetypes.lua#L1107
 	return self:set("Content-Type", typ)
@@ -193,10 +345,11 @@ end
 -- Set the location header to `url`.
 -- The given `url` can also be "back", which redirects to the _Referrer_ or _Referer_ headers or "/".
 function RES_MT:location(url) -- redirect
-	local loc = url
-
+	local loc
 	if url == "back" then
 		loc = self.req:get("Referrer") or "/"
+	else
+		loc = tostring(url)
 	end
 
 	return self:set("Location", loc) -- #todo urlencode
