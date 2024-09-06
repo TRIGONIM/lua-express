@@ -1,0 +1,18 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug!",
+			"type": "lua",
+			"request": "launch",
+			"stopOnEntry": true,
+			// "runtimeExecutable": "/usr/bin/lua",
+			// "runtimeArgs": "${workspaceFolder}/init.lua",
+			// "runtimeArgs": "${file}",
+			// "program": "${file}",
+			"program": "examples/downloads/init.lua",
+			"cwd": "${fileWorkspaceFolder}"
+			// "luaVersion": "luajit",
+		}
+	]
+}
