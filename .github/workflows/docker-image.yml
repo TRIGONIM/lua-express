@@ -2,10 +2,10 @@ name: Build Docker Image # source: https://github.com/TRIGONIM/lua-long-polling/
 
 on:
   schedule:
-    - cron: '37 13 * * 1'
+    - cron: "37 13 * * 1"
   push:
     branches: [ "main" ]
-    tags: [ 'v*.*.*' ]
+    tags: [ "v*.*.*" ]
 
 env:
   REGISTRY: ghcr.io
@@ -15,7 +15,7 @@ jobs:
   build_and_publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -27,7 +27,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v6
         with:
           context: .
           push: true

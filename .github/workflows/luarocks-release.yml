@@ -3,14 +3,14 @@ name: "Release"
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ "main" ]
+    tags: [ "v*.*.*" ]
 
 jobs:
   luarocks-upload:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: LuaRocks Upload
         uses: nvim-neorocks/luarocks-tag-release@v4
         env:
