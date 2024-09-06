@@ -1,3 +1,4 @@
+---@overload fun(): ExpressApplication
 local express = setmetatable({}, {
 	__call = function(self)
 		return self.createApplication()

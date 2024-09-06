@@ -283,7 +283,8 @@ end
 local wrap_req, wrap_res do
 	--- @return ExpressRequest
 	wrap_req = function(pg_req)
-		local req = { --- @class ExpressRequest
+		--- @class ExpressRequest
+		local req = {
 			-- Is needed for express to be similar to nodejs
 
 			url     = pg_req:path(), --- @type string /hello/world?foo=bar <br> /info for router:get("/info", ...)
@@ -368,6 +369,7 @@ function APP_MT:listen(port, callback, host, sslparams)
 	end, sslparams))
 
 	io.stderr:write("express.lua is up on " .. (sslparams and "https" or "http") .. "://" .. server_ip .. ":" .. server_port .. "/\n")
+	-- /\ why not stdout? I dont remember
 
 	if not copas.running then
 		copas.loop(callback and function()
