@@ -1,5 +1,5 @@
 # source: https://github.com/TRIGONIM/lua-requests-async/blob/main/.github/workflows/release.yml
-name: "Release"
+name: "Luarocks Release"
 
 on:
   push:
@@ -7,15 +7,15 @@ on:
     tags: [ "v*.*.*" ]
 
 jobs:
-  luarocks-upload:
-    runs-on: ubuntu-22.04
+  luarocks-release:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: LuaRocks Upload
-        uses: nvim-neorocks/luarocks-tag-release@v4
+      - uses: nvim-neorocks/luarocks-tag-release@v7
         env:
           LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
         with:
+          extra_luarocks_args: --force # update lr version on commit
           summary: "A minimalistic web framework for Lua"
           detailed_description: |
             Create complete web applications of any complexity in Lua with minimal dependencies.
