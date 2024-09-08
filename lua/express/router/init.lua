@@ -15,7 +15,8 @@ local ROUTER_MT = setmetatable({}, {
 	__call  = function(self, options)
 		local opts = options or {}
 
-		local router = { --- @class ExpressRouterBase
+		--- @class ExpressRouterBase
+		local router = {
 			params = {}, --- @type table
 			caseSensitive = opts.caseSensitive, --- @type boolean
 			-- mergeParams = opts.mergeParams, -- the reason of comment below in file
