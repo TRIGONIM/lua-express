@@ -356,7 +356,8 @@ function APP_MT:listen(port, callback, host, sslparams)
 	copas.autoclose = false
 	copas.addserver(server_sock, copas.handler(function(client_sock)
 
-		local pg_req = PG_Request:new(port, client_sock)
+		local Handler = {log = require("pegasus.log")} -- https://github.com/EvandroLG/pegasus.lua/blob/c0e9b4d136b2a1a59a75ed8be26a544c8187d64c/src/pegasus/handler.lua#L121
+		local pg_req = PG_Request:new(port, client_sock, nil, Handler)
 		if not pg_req:method() then client_sock:close() return end
 
 		local writeHandler = {} -- crutch because of the pegasus.lua code (it should not be there)

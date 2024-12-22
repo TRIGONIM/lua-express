@@ -27,13 +27,13 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           # При обычном коммите делает тег main (ветка) вместо latest. Логично, но некрасиво. Ниже изменения
-          # 1. Применяет тег "latest", если текущий ref является тегом
+          # 1. Применяет тег "latest" при коммитах и тегах
           # 2. Применяет тег, основанный на имени ветки
           # 3. Применяет тег, основанный на хэше коммита
           # 4. Применяет тег, аналогичный тегу рефа, если текущий ref является тегом
           # Альтернативный вариант: https://github.com/strato-earth/workflow-task-template/blob/038f51662aff7e1b9fd6cf98c13e0e3ee8c65855/github/build.yml#L34-L44C17
           tags: |
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=latest,enable=true
             type=ref,event=branch
             type=sha,format=short
             type=raw,value=${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/') }}
